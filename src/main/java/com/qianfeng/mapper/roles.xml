@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianfeng.dao.RolesDao">
+    <resultMap type="com.qianfeng.bean.Roles" id="m1">
+        <!-- 保证表与实体类一一对应 -->
+        <result property="id" column="id"/>
+        <result property="roles_name" column="roles_name"/>
+        <result property="roles_status" column="roles_status"/>
+        <collection property="children" ofType="com.qianfeng.bean.Roles">
+            <result property="id" column="id"/>
+            <result property="roles_name" column="roles_name"/>
+            <result property="roles_status" column="roles_status"/>
+        </collection>
+    </resultMap>
+
+    <select id="countRoles" resultType="java.lang.Integer">
+        SELECT count(*)  from roles_users
+    </select>
+
+    <resultMap id="m2" type="com.qianfeng.bean.Roles">
+        <result column="id" property="id"></result>
+        <result column="roles_name" property="roles_name"></result>
+        <association property="user"  javaType="com.qianfeng.bean.Users">
+            <result column="users_account" property="users_account"></result>
+        </association>
+    </resultMap>
+    <!--查询所有的角色-->
+    <select id="findAllRoles" resultMap="m2">
+    SELECT * from roles_users ru
+    LEFT JOIN roles r on r.id=ru.role_id
+    LEFT JOIN users u on  u.id=ru.user_id
+    limit #{start},#{pagesize}
+    </select>
+ <!--   &lt;!&ndash;搜索&ndash;&gt;
+    <select id="search" resultMap="m2" parameterMap="map">
+        select users_account,roles_name
+        from roles_users ru
+        LEFT join roles r on ru.role_id=r.id
+        LEFT join users u on ru.user_id=u.id
+        <where>
+            <if test="type=='users_account'">AND  u.users_account like CONCAT(CONCAT('%',#{key},'%')) AND
+                roles_status=1</if>
+            <if test="type=='roles_name'">AND r.roles_name like CONCAT(CONCAT('%',#{key},'%')) AND
+                roles_status=1</if>
+        </where>
+    </select>-->
+
+
+    <!--根据用户名查询角色-->
+    <select id="findRolesByUser" resultMap="m1">
+       SELECT id,roles_name,roles_status
+        FROM
+        roles_users ru
+        LEFT join roles  on ru.role_id=id
+        where ru.user_id=#{user_id}
+
+    </select>
+    <!--根据角色查询-->
+    <select id="findUsersByRoles" resultMap="m1">
+      SELECT id ,users_account,users_status
+      FROM
+      roles_users ru
+      LEFT join users on ru.user_id=id
+      where ru.role_id=#{role_id}
+    </select>
+    <!--删除角色-->
+    <delete id="deleteRoles" parameterType="list">
+        delete from Roles where id in
+        <foreach close=")" separator="," open="(" item="x" collection="list">#{x}
+        </foreach>
+    </delete>
+    <!--添加角色-->
+    <insert id="addRole">
+    insert into roles (roles_name,roles_status) values (#{roles_name},#{roles_status})
+</insert>
+    <!--删除用户旧角色-->
+    <delete id="deleteOldRoles" parameterType="com.qianfeng.bean.Roles">
+        delete from roles_users where user_id=#{user_id}
+    </delete>
+    <!--分配角色-->
+    <insert id="fenp" parameterType="map">
+        insert into roles_users(role_id,user_id) values
+        <foreach collection="roles" item="role_id" separator=",">
+            (#{user_id},#{role_id})
+        </foreach>
+    </insert>
+
+</mapper>

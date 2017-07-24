@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianfeng.dao.UsersDao">
+    <resultMap type="com.qianfeng.bean.Roles" id="m1">
+        <!-- 保证表与实体类一一对应 -->
+        <result property="id" column="id"/>
+        <result property="roles_name" column="roles_name"/>
+        <result property="roles_status" column="roles_status"/>
+        <collection property="children" ofType="com.qianfeng.bean.Roles">
+            <result property="id" column="id"/>
+            <result property="roles_name" column="roles_name"/>
+            <result property="roles_status" column="roles_status"/>
+        </collection>
+    </resultMap>
+    <select resultType="java.lang.Integer" id="findUsersByCount">
+ SELECT COUNT(id) FROM users
+</select>
+    <select resultType="com.qianfeng.bean.Users"
+            id="login"> SELECT * FROM users WHERE users_account=#{users_account} AND users_pwd=#{users_pwd} GROUP BY users_status=1 </select>
+    <select resultType="com.qianfeng.bean.Users" id="findUsers">
+        SELECT * FROM users u
+        <where>
+            <if test="users_account !=null ">AND u.users_account LIKE CONCAT(CONCAT('%',
+                #{users_account, jdbcType=VARCHAR}),'%') AND users_status=1
+            </if>
+        </where>
+    </select>
+
+    <select resultMap="m1" id="findAllUsers">
+        SELECT * FROM roles_users ru
+        LEFT JOIN users u ON ru.user_id=u.id
+        LEFT  JOIN  Roles r ON ru.role_id=r.id
+        WHERE users_status=1 limit #{start},#{pagesize}
+    </select>
+    <!--添加新用户-->
+
+    <insert id="addUsers" keyProperty="id" useGeneratedKeys="true"
+            parameterType="com.qianfeng.bean.Users"> INSERT INTO users(users_account,users_pwd)VALUES (#{users_account},#{users_pwd})
+</insert>
+    <!--修改用户信息-->
+    <update id="updateUsers" parameterType="com.qianfeng.bean.Users">
+        UPDATE users u
+        <set>
+            <if test="users_account != null">u.users_account=#{users_account},</if>
+            <if test="users_pwd != null">u.users_pwd=#{users_pwd}</if>
+        </set>
+        where u.id = #{id}
+    </update>
+
+    <!--删除用户信息-->
+
+    <update id="removeUsersByStatus">
+        UPDATE users SET users_status='0' WHERE id IN
+        <foreach close=")" separator="," open="(" item="item" index="index" collection="list">#{item}</foreach>
+
+    </update>
+
+    <!--搜索-->
+
+    <select resultType="com.qianfeng.bean.Users" id="searchUsersBylike" parameterType="map">
+        select * from users
+        <where>
+            <if test="type!=null and type != ''">
+                <if test="type=='users_account'">AND users_account like CONCAT(CONCAT('%',#{key},'%')) AND
+                    users_status=1
+                </if>
+                <if test="type=='users_pwd'">AND users_pwd like CONCAT(CONCAT('%',#{key},'%')) AND users_status=1</if>
+
+            </if>
+        </where>
+    </select>
+
+</mapper>

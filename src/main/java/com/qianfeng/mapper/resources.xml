@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianfeng.dao.ResourcesDao">
+    <resultMap type="com.qianfeng.bean.Resources" id="resourcesMap1">
+        <result property="id" column="id"/>
+        <result property="name" column="resource_name"/>
+        <result property="_parentId" column="resource_parentid"/>
+        <result property="path" column="resource_path"/>
+    </resultMap>
+    <!--查询所有资源-->
+    <select id="findAllResources" resultMap="resourcesMap1">
+        SELECT id, resource_name , resource_path ,(CASE WHEN resource_parentid=0 THEN NULL ELSE resource_parentid END) as resource_parentid from resources
+    </select>
+</mapper>
